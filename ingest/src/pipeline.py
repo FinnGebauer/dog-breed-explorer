@@ -1,7 +1,7 @@
 import json
 import requests
 import dlt
-from datetime import timezonegit
+from datetime import timezone
 from google.cloud import storage
 from datetime import datetime
 from typing import List, Dict
