@@ -1,6 +1,7 @@
 import json
 import requests
 import dlt
+from datetime import timezone
 from google.cloud import storage
 from datetime import datetime
 from typing import List, Dict
@@ -33,7 +34,7 @@ def write_raw_to_gcs(data: List[Dict], bucket_name: str, prefix: str) -> str:
     client = storage.Client()
     bucket = client.bucket(bucket_name)
 
-    ts = datetime.utcnow().strftime("%Y%m%dT%H%M%SZ")
+    ts = datetime.now(timezone.utc).strftime("%Y%m%dT%H%M%SZ")
     blob_path = f"{prefix}/raw_{ts}.json"
 
     blob = bucket.blob(blob_path)
