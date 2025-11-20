@@ -1,0 +1,11 @@
+dog_breed_explorer:
+  target: dev
+  outputs:
+    dev:
+      type: bigquery
+      method: oauth
+      project: "{{ env_var('DBT_GCP_PROJECT') }}"
+      dataset: "curated"
+      threads: 4
+      location: "EU"
+      priority: interactive

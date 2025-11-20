@@ -1,0 +1,58 @@
+version: 2
+
+sources:
+  - name: bronze
+    tables:
+      - name: dog_api_raw
+        columns:
+          - name: weight__imperial
+            data_type: string
+            description: Dog breed weight range in imperial units (pounds)
+          - name: weight__metric
+            data_type: string
+            description: Dog breed weight range in metric units (kilograms)
+          - name: height__imperial
+            data_type: string
+            description: Dog breed height range in imperial units (inches)
+          - name: height__metric
+            data_type: string
+            description: Dog breed height range in metric units (centimeters)
+          - name: id
+            data_type: int64
+            description: Unique identifier for the dog breed
+          - name: name
+            data_type: string
+            description: Name of the dog breed
+          - name: breed_group
+            data_type: string
+            description: Classification group of the breed (e.g., Sporting, Hound, Working)
+          - name: bred_for
+            data_type: string
+            description: Original purpose or function the breed was developed for
+          - name: life_span
+            data_type: string
+            description: Average lifespan range of the breed in years
+          - name: temperament
+            data_type: string
+            description: Typical personality traits and behavioral characteristics
+          - name: origin
+            data_type: string
+            description: Geographic origin or country where the breed was developed
+          - name: reference_image_id
+            data_type: string
+            description: Identifier for the reference image of the breed
+          - name: _dlt_load_id
+            data_type: string
+            description: DLT pipeline load identifier for data lineage tracking
+          - name: _dlt_id
+            data_type: string
+            description: DLT unique record identifier
+          - name: country_code
+            data_type: string
+            description: ISO country code for the breed's origin
+          - name: description
+            data_type: string
+            description: General description of the dog breed
+          - name: history
+            data_type: string
+            description: Historical background and development of the breed
