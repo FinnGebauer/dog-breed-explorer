@@ -46,7 +46,7 @@ def load_to_bigquery(data: List[Dict], dataset: str) -> dict:
     """
     Loads data into BigQuery using dlt.
     - Creates a pipeline named 'dog_breeds'
-    - Writes to dataset.bronze table dog_api_raw
+    - Writes to {dataset}.dog_api_raw table
     """
     pipeline = dlt.pipeline(
         pipeline_name="dog_breeds",
