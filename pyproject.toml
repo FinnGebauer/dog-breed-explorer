@@ -1,16 +1,25 @@
-[project]
+[tool.poetry]
 name = "dog-breed-explorer"
 version = "0.1.0"
-description = ""
-authors = [
-    {name = "Finn Gebauer",email = "fi.geba@gmail.com"}
-]
+description = "End-to-end data pipeline: dlt ingestion → BigQuery → dbt → dashboard."
+authors = ["Finn Gebauer <fi.geba@gmail.com>"]
 readme = "README.md"
-requires-python = ">=3.10"
-dependencies = [
-]
+packages = [{ include = "ingest" }]
 
+[tool.poetry.dependencies]
+python = "^3.11 <3.13"
+dlt = "^0.5"
+google-cloud-storage = "^2.15"
+google-cloud-bigquery = "^3.17"
+requests = "^2.32"
+
+[tool.poetry.group.dev.dependencies]
+pytest = "^8.0"
+black = "^24.0"
+ruff = "^0.3"
+dbt-bigquery = "^1.8"
+requests-mock = "^1.12.1"
 
 [build-system]
-requires = ["poetry-core>=2.0.0,<3.0.0"]
+requires = ["poetry-core"]
 build-backend = "poetry.core.masonry.api"
