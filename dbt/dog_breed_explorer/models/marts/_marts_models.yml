@@ -1,0 +1,50 @@
+version: 2
+
+models:
+  - name: dim_breed
+    description:
+      Dimension table providing one clean record per dog breed, containing
+      descriptive and categorical information useful for joining with fact tables.
+    columns:
+      - name: breed_id
+        description: "Unique identifier of the dog breed."
+        tests:
+          - not_null
+          - unique
+
+      - name: breed_name
+        description: "Common name of the breed."
+        tests:
+          - not_null
+
+      - name: breed_group
+        description: "High-level breed classification (e.g. 'Hound', 'Working')."
+
+      - name: temperament
+        description: "Comma-separated list of temperament traits."
+
+      - name: reference_image_id
+        description: "Image ID used to fetch breed images from the API."
+  - name: fact_breed_metrics
+    description:
+      Fact table containing numeric characteristics for each dog breed, including
+      weight, height, and life expectancy metrics.
+    columns:
+      - name: breed_id
+        tests:
+          - not_null
+      - name: life_span_years_avg
+        tests:
+          - not_null
+          - expression_is_true:
+              expression: "life_span_years_avg > 0 AND life_span_years_avg < 30"
+      - name: weight_kg_avg
+        tests:
+          - not_null
+          - expression_is_true:
+              expression: "weight_kg_avg > 0 AND weight_kg_avg < 120"
+      - name: height_cm_avg
+        tests:
+          - not_null
+          - expression_is_true:
+              expression: "height_cm_avg > 0 AND height_cm_avg < 120"
