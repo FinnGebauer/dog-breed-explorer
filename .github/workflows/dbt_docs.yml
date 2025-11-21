@@ -5,7 +5,7 @@ on:
     branches:
       - main
     paths:
-      - "dbt/**"
+      - "dbt/dog_breed_explorer/**"
       - ".github/workflows/dbt_docs.yml"
 
 jobs:
@@ -27,13 +27,11 @@ jobs:
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
       - name: Install dependencies
-        run: |
-          poetry install
+        run: poetry install
 
-      # Needed for BigQuery profile, but dbt docs generation does NOT require a real connection.
-      - name: Create temp profiles.yml
+      - name: Create temporary dbt profile
         run: |
-          mkdir -p ~/.dbt/
+          mkdir -p ~/.dbt
           cat <<EOF > ~/.dbt/profiles.yml
           dog_breed_explorer:
             target: docs
@@ -42,19 +40,22 @@ jobs:
                 type: bigquery
                 method: oauth
                 project: "dummy"
-                dataset: "dummy"
+                dataset: "docs"
                 threads: 1
-                location: "EU"
+                location: EU
           EOF
 
-      - name: Generate dbt docs
-        run: |
-          poetry run dbt deps --profiles-dir .
-          poetry run dbt docs generate --profiles-dir .
+      - name: Install dbt packages
+        working-directory: ./dbt/dog_breed_explorer
+        run: poetry run dbt deps
 
-      - name: Deploy to GitHub Pages
+      - name: Generate dbt docs
+        working-directory: ./dbt/dog_breed_explorer
+        run: poetry run dbt docs generate
+
+      - name: Publish dbt docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: dbt/target
+          publish_dir: dbt/dog_breed_explorer/target
           publish_branch: gh-pages
