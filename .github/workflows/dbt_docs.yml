@@ -57,7 +57,7 @@ jobs:
 
       - name: Generate dbt docs
         working-directory: ./dbt/dog_breed_explorer
-        run: poetry run dbt docs generate --no-compile
+        run: poetry run dbt docs generate
 
       - name: Publish dbt docs to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
