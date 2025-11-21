@@ -33,8 +33,8 @@ jobs:
       # Needed for BigQuery profile, but dbt docs generation does NOT require a real connection.
       - name: Create temp profiles.yml
         run: |
-          mkdir -p ./dbt/
-          cat <<EOF > ./dbt/profiles.yml
+          mkdir -p ~/.dbt/
+          cat <<EOF > ~/.dbt/profiles.yml
           dog_breed_explorer:
             target: docs
             outputs:
@@ -48,7 +48,6 @@ jobs:
           EOF
 
       - name: Generate dbt docs
-        working-directory: dbt
         run: |
           poetry run dbt deps --profiles-dir .
           poetry run dbt docs generate --profiles-dir .
