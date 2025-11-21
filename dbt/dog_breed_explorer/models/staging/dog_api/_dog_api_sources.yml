@@ -1,7 +1,9 @@
 version: 2
 
 sources:
-  - name: bronze
+  - name: raw
+    database: "{{ env_var('DBT_GCP_PROJECT') }}"
+    schema: raw
     tables:
       - name: dog_api_raw
         columns:

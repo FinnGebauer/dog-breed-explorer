@@ -3,9 +3,26 @@ dog_breed_explorer:
   outputs:
     dev:
       type: bigquery
-      method: oauth
+      method: service-account
       project: "{{ env_var('DBT_GCP_PROJECT') }}"
-      dataset: "curated"
+      schema: "{{ env_var('DATASET', 'dog_breeds_dev') }}"
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
       threads: 4
-      location: "EU"
-      priority: interactive
+      location: EU
+
+    prod:
+      type: bigquery
+      method: service-account
+      project: "{{ env_var('DBT_GCP_PROJECT') }}"
+      schema: "{{ env_var('DATASET', 'dog_breeds_prod') }}"
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      threads: 4
+      location: EU
+
+    ci:
+      type: bigquery
+      method: oauth
+      project: "dummy"
+      schema: "dog_breeds_ci"
+      threads: 1
+      location: EU

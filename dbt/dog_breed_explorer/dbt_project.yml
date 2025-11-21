@@ -42,3 +42,6 @@ models:
     marts:
       +materialized: table
       +schema: marts
+
+vars:
+  schema: "{{ env_var('DATASET', 'dog_breeds_dev') }}"
