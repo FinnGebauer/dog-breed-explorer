@@ -11,40 +11,65 @@ models:
         tests:
           - not_null
           - unique
-
       - name: breed_name
         description: "Common name of the breed."
         tests:
           - not_null
-
+          - dbt_expectations.expect_column_values_to_not_be_null
       - name: breed_group
         description: "High-level breed classification (e.g. 'Hound', 'Working')."
-
-      - name: temperament
-        description: "Comma-separated list of temperament traits."
-
       - name: reference_image_id
         description: "Image ID used to fetch breed images from the API."
+  
   - name: fact_breed_metrics
     description:
       Fact table containing numeric characteristics for each dog breed, including
       weight, height, and life expectancy metrics.
     columns:
       - name: breed_id
+        description: "Foreign key to dim_breed. Identifies the dog breed."
         tests:
           - not_null
+          - relationships:
+              to: ref('dim_breed')
+              field: breed_id
       - name: life_span_years_avg
+        description: "Average life expectancy of the breed in years."
         tests:
           - not_null
-          - expression_is_true:
-              expression: "life_span_years_avg > 0 AND life_span_years_avg < 30"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 30
+              strictly: true
       - name: weight_kg_avg
+        description: "Average weight of the breed in kilograms."
         tests:
           - not_null
-          - expression_is_true:
-              expression: "weight_kg_avg > 0 AND weight_kg_avg < 120"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 120
+              strictly: true
       - name: height_cm_avg
+        description: "Average height of the breed in centimeters."
         tests:
           - not_null
-          - expression_is_true:
-              expression: "height_cm_avg > 0 AND height_cm_avg < 120"
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 120
+              strictly: true
+  
+  - name: dim_temperaments
+    description: Individual temperament traits per breed
+    columns:
+      - name: breed_id
+        description: Foreign key to dim_breed
+        tests:
+          - not_null
+          - relationships:
+              to: ref('dim_breed')
+              field: breed_id
+      - name: temperament
+        description: Single temperament trait
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_not_be_null

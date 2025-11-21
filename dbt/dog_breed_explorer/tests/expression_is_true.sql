@@ -1,4 +1,4 @@
-{% test expression_is_true(model, expression) %}
+{% test expression_is_true(model, column_name, expression) %}
 
 select *
 from {{ model }}

@@ -40,11 +40,7 @@ metrics AS (
         -- Height metrics (cm)
         height_cm_min,
         height_cm_max,
-        SAFE_DIVIDE(height_cm_min + height_cm_max, 2) AS height_cm_avg,
-
-        -- Lineage metadata for debugging / freshness checks
-        _dlt_load_id,
-        _dlt_id
+        SAFE_DIVIDE(height_cm_min + height_cm_max, 2) AS height_cm_avg
 
     FROM base
 )
