@@ -29,7 +29,6 @@ unnested AS (
 )
 
 SELECT
-    {{ dbt_utils.generate_surrogate_key(['breed_id', 'temperament']) }} AS temperament_key,
     breed_id,
     temperament
 FROM unnested

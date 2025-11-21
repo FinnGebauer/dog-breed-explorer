@@ -18,8 +18,6 @@ models:
           - dbt_expectations.expect_column_values_to_not_be_null
       - name: breed_group
         description: "High-level breed classification (e.g. 'Hound', 'Working')."
-      - name: temperament
-        description: "Comma-separated list of temperament traits."
       - name: reference_image_id
         description: "Image ID used to fetch breed images from the API."
   
