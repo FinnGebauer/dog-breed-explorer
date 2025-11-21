@@ -15,7 +15,7 @@ jobs:
     env:
         DBT_GCP_PROJECT: dummy_project
         DATASET: dummy_dataset
-        GOOGLE_APPLICATION_CREDENTIALS: ""
+        GOOGLE_APPLICATION_CREDENTIALS: /dev/null
 
     steps:
       - name: Checkout repository
