@@ -12,6 +12,10 @@ jobs:
   dbt-docs:
     runs-on: ubuntu-latest
 
+    env:
+        DBT_GCP_PROJECT: dummy_project
+        DATASET: dummy_dataset
+
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
