@@ -6,7 +6,7 @@ dog_breed_explorer:
       method: service-account
       project: "{{ env_var('DBT_GCP_PROJECT') }}"
       schema: "{{ env_var('DATASET', 'dog_breeds_dev') }}"
-      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS', '/tmp/dummy.json') }}"
       threads: 4
       location: EU
 
@@ -15,7 +15,7 @@ dog_breed_explorer:
       method: service-account
       project: "{{ env_var('DBT_GCP_PROJECT') }}"
       schema: "{{ env_var('DATASET', 'dog_breeds_prod') }}"
-      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS', '/tmp/dummy.json') }}"
       threads: 4
       location: EU
 
