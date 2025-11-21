@@ -17,11 +17,12 @@ dbt/**/*.log
 terraform.tfstate
 terraform.tfstate.backup
 
-# Environment files
+# Environment files & keys
 .env
 .env.*
 *.key.json
 *.json.enc
+.keys/
 
 # macOS
 .DS_Store
