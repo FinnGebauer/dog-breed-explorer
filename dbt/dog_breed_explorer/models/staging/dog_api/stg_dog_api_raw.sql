@@ -42,19 +42,39 @@ renamed AS (
         -- measurements - weight
         weight__metric AS weight_metric_raw,
         weight__imperial AS weight_imperial_raw,
-        SAFE_CAST(REGEXP_EXTRACT(weight__metric, r'^(\d+)') AS INT64) AS weight_kg_min,
-        SAFE_CAST(REGEXP_EXTRACT(weight__metric, r'(\d+)$') AS INT64) AS weight_kg_max,
+        SAFE_CAST(
+            REGEXP_EXTRACT(
+                CASE WHEN weight__metric IN ('NaN', 'null', '') THEN NULL ELSE weight__metric END,
+                r'^(\d+)'
+            ) AS INT64
+        ) AS weight_kg_min,
+        SAFE_CAST(
+            REGEXP_EXTRACT(
+                CASE WHEN weight__metric IN ('NaN', 'null', '') THEN NULL ELSE weight__metric END,
+                r'(\d+)$'
+            ) AS INT64
+        ) AS weight_kg_max,
 
         -- measurements - height
         height__metric AS height_metric_raw,
         height__imperial AS height_imperial_raw,
-        SAFE_CAST(REGEXP_EXTRACT(height__metric, r'^(\d+)') AS INT64) AS height_cm_min,
-        SAFE_CAST(REGEXP_EXTRACT(height__metric, r'(\d+)$') AS INT64) AS height_cm_max,
+        SAFE_CAST(
+            REGEXP_EXTRACT(
+                CASE WHEN height__metric IN ('NaN', 'null', '') THEN NULL ELSE height__metric END,
+                r'^(\d+)'
+            ) AS INT64
+        ) AS height_cm_min,
+        SAFE_CAST(
+            REGEXP_EXTRACT(
+                CASE WHEN height__metric IN ('NaN', 'null', '') THEN NULL ELSE height__metric END,
+                r'(\d+)$'
+            ) AS INT64
+        ) AS height_cm_max,
 
-        -- life span
+        -- life span (case-insensitive to handle "Years years")
         life_span AS life_span_raw,
         SAFE_CAST(REGEXP_EXTRACT(life_span, r'^(\d+)') AS INT64) AS life_span_years_min,
-        SAFE_CAST(REGEXP_EXTRACT(life_span, r'(\d+)\s*years?$') AS INT64) AS life_span_years_max,
+        SAFE_CAST(REGEXP_EXTRACT(life_span, r'(\d+)\s*(?:years?|Years)') AS INT64) AS life_span_years_max,
 
         -- metadata
         reference_image_id,

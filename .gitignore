@@ -4,8 +4,10 @@ __pycache__/
 .venv/
 
 # dbt
+dbt/logs/
 dbt/target/
 dbt/dbt_packages/
+dbt/**/*.log
 
 # Terraform
 .terraform/

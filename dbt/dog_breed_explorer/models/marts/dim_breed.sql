@@ -42,9 +42,6 @@ SELECT
     origin,
     country_code,
     
-    -- Characteristics
-    temperament,
-    
     -- Detailed information
     description,
     history,
