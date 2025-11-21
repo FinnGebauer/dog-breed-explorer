@@ -15,6 +15,7 @@ jobs:
     env:
         DBT_GCP_PROJECT: dummy_project
         DATASET: dummy_dataset
+        GOOGLE_APPLICATION_CREDENTIALS: ""
 
     steps:
       - name: Checkout repository
@@ -35,37 +36,20 @@ jobs:
 
       - name: Create temporary dbt profile
         run: |
-          mkdir -p ~/.dbt
-          cat <<EOF > ~/.dbt/profiles.yml
-          dog_breed_explorer:
+            mkdir -p ~/.dbt
+            cat <<EOF > ~/.dbt/profiles.yml
+            dog_breed_explorer:
             target: docs
             outputs:
-              docs:
+                docs:
                 type: bigquery
-                method: service-account
+                method: oauth
                 project: "dummy_project"
                 dataset: "dummy_dataset"
                 threads: 1
                 location: EU
-                keyfile: /tmp/dummy-keyfile.json
-          EOF
+            EOF
 
-      - name: Create dummy service account keyfile
-        run: |
-          mkdir -p /tmp
-          cat <<EOF > /tmp/dummy-keyfile.json
-          {
-            "type": "service_account",
-            "project_id": "dummy_project",
-            "private_key_id": "dummy",
-            "private_key": "-----BEGIN PRIVATE KEY-----\nMIIEvgIBADANBgkqhkiG9w0BAQEFAASCBKgwggSkAgEAAoIBAQC\n-----END PRIVATE KEY-----\n",
-            "client_email": "dummy@dummy_project.iam.gserviceaccount.com",
-            "client_id": "12345",
-            "auth_uri": "https://accounts.google.com/o/oauth2/auth",
-            "token_uri": "https://oauth2.googleapis.com/token",
-            "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs"
-          }
-          EOF
 
       - name: Install dbt packages
         working-directory: ./dbt/dog_breed_explorer
