@@ -14,7 +14,7 @@ def main():
     api_key = os.getenv("DOG_API_KEY")
     gcs_bucket = os.getenv("GCS_BUCKET")
     gcs_prefix = os.getenv("GCS_PREFIX", "dog_api")
-    bq_dataset = os.getenv("BQ_DATASET", "bronze")
+    bq_dataset = os.getenv("DATASET", "raw")
 
     if not gcs_bucket:
         raise ValueError("Missing required environment variable: GCS_BUCKET")

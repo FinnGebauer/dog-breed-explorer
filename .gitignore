@@ -9,6 +9,9 @@ dbt/target/
 dbt/dbt_packages/
 dbt/**/*.log
 
+# dlt
+.dlt/secrets.toml
+
 # Terraform
 .terraform/
 terraform.tfstate

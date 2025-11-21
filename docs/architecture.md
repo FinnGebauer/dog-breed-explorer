@@ -5,7 +5,7 @@ This project implements an end-to-end modern data pipeline:
 1. **Ingestion (dlt)**  
    - Fetches data from The Dog API  
    - Stores raw JSON in Google Cloud Storage  
-   - Loads data into BigQuery (`bronze` dataset)
+   - Loads data into BigQuery (`raw` dataset)
 
 2. **Transformation (dbt)**  
    - Staging models to normalize the API schema  

@@ -28,8 +28,7 @@ jobs:
 
       - name: Install dependencies
         run: |
-          poetry install --without dev
-          # or "poetry install" if you want dev deps
+          poetry install
 
       # Needed for BigQuery profile, but dbt docs generation does NOT require a real connection.
       - name: Create temp profiles.yml

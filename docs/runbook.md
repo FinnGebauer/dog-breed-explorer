@@ -37,7 +37,7 @@ gcloud run services logs read dog-breed-runner
 
 ### Check BigQuery
 
-Inspect the latest ingestion batch in the `bronze.dog_api_raw` table.
+Inspect the latest ingestion batch in the `raw.dog_api_raw` table.
 
 ### Check Cloud Storage
 
@@ -66,7 +66,7 @@ dashboards/   # Looker Studio exports
 2. Set required environment variables:
    ```bash
    export GCS_BUCKET=your-bucket
-   export BQ_DATASET=bronze
+   export DATASET=dog_breeds_dev
    export DOG_API_KEY=your-api-key  # optional
    ```
 

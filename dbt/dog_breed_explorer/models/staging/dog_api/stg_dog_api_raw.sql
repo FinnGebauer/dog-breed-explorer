@@ -2,7 +2,7 @@
 --
 -- Purpose:
 --   This staging model cleans and standardises the raw Dog API data loaded into
---   the bronze layer by dlt. It:
+--   the raw layer by dlt. It:
 --   - Renames fields into a consistent naming convention
 --   - Parses weight, height, and lifespan ranges into numeric min/max columns
 --   - Ensures stable primary keys (breed_id)
@@ -10,14 +10,14 @@
 --   - Exposes dlt lineage metadata (_dlt_id, _dlt_load_id)
 --
 -- Why this model exists:
---   The bronze table stores the API response exactly as delivered by dlt.
+--   The raw table stores the API response exactly as delivered by dlt.
 --   This model transforms it into a clean, analytics-friendly schema and serves
 --   as the single source of truth for downstream marts.
 
 
 WITH source AS (
 
-    SELECT * FROM {{ source('bronze', 'dog_api_raw') }}
+    SELECT * FROM {{ source('raw', 'dog_api_raw') }}
 
 ),
 
