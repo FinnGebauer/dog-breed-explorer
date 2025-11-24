@@ -13,9 +13,12 @@ dbt/**/*.log
 .dlt/secrets.toml
 
 # Terraform
-.terraform/
-terraform.tfstate
-terraform.tfstate.backup
+infra/.terraform/
+infra/terraform.tfstate
+infra/terraform.tfstate.backup
+infra/*.tfvars
+infra/.terraform.lock.hcl
+infra/function-source.zip
 
 # Environment files & keys
 .env

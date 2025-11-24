@@ -12,6 +12,7 @@ dlt = "^0.5"
 google-cloud-storage = "^2.15"
 google-cloud-bigquery = "^3.17"
 requests = "^2.32"
+functions-framework = "^3.10.0"
 
 [tool.poetry.group.dev.dependencies]
 pytest = "^8.0"
