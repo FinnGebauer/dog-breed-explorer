@@ -87,6 +87,7 @@ jobs:
           GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
           GCS_PREFIX: dog_api
           DATASET: raw
+          DESTINATION__BIGQUERY__LOCATION: EU
         run: |
           poetry install
           poetry run python src/runner.py

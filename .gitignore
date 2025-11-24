@@ -1,31 +1,47 @@
 # Python / Poetry
 __pycache__/
 *.pyc
+*.pyo
+*.pyd
+.Python
 .venv/
+venv/
+*.egg-info/
 
 # dbt
-dbt/logs/
-dbt/target/
-dbt/dbt_packages/
+dbt/**/logs/
+dbt/**/target/
+dbt/**/dbt_packages/
 dbt/**/*.log
 
-# dlt
-.dlt/secrets.toml
+# dlt secrets (keep config.toml if you have one)
+**/.dlt/secrets.toml
 
 # Terraform
 infra/.terraform/
-infra/terraform.tfstate
-infra/terraform.tfstate.backup
+infra/terraform.tfstate*
 infra/*.tfvars
 infra/.terraform.lock.hcl
-infra/function-source.zip
+infra/*.zip
 
-# Environment files & keys
-.env
-.env.*
+# Credentials & secrets
+.env*
+!.env.example
 *.key.json
 *.json.enc
 .keys/
+github-actions-key.json
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
 
 # macOS
 .DS_Store
+
+# Test artifacts
+.pytest_cache/
+.coverage
+htmlcov/
