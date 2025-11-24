@@ -9,11 +9,10 @@ on:
 env:
   PYTHON_VERSION: "3.11"
   GCP_PROJECT_ID: dog-breed-explorer-478808
-  GCP_REGION: europe-west3
 
 jobs:
   test:
-    name: Run Tests
+    name: Run dbt Tests
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request'
     
@@ -31,9 +30,6 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
@@ -45,27 +41,20 @@ jobs:
           poetry install
           poetry run dbt deps
 
-      - name: Run dbt against dev
+      - name: Run dbt (dev)
         working-directory: dbt/dog_breed_explorer
-        run: |
-          poetry run dbt run --target dev
-          poetry run dbt test --target dev --store-failures
+        run: poetry run dbt run --target dev
 
-      - name: Report test results to Cloud Logging
+      - name: Test dbt (dev)
+        working-directory: dbt/dog_breed_explorer
+        run: poetry run dbt test --target dev --store-failures
+
+      - name: Report test results
         if: always()
         working-directory: dbt
         run: |
           pip install google-cloud-logging
           python dbt_test_reporter.py
-
-      - name: Upload dbt artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dbt-artifacts-dev
-          path: |
-            dbt/dog_breed_explorer/target/run_results.json
-            dbt/dog_breed_explorer/target/manifest.json
 
   deploy:
     name: Deploy to Production
@@ -86,30 +75,21 @@ jobs:
         with:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-      - name: Set up Cloud SDK
-        uses: google-github-actions/setup-gcloud@v2
-
       - name: Install Poetry
         run: |
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      # Deploy Cloud Function directly (no Terraform)
-      - name: Deploy ingestion Cloud Function
+      - name: Run ingestion (dlt)
+        working-directory: ingest
+        env:
+          DOG_API_KEY: ${{ secrets.DOG_API_KEY }}
+          GCS_BUCKET: ${{ secrets.GCS_BUCKET }}
+          GCS_PREFIX: dog_api
+          DATASET: raw
         run: |
-          cd ingest
-          gcloud functions deploy dog-breed-ingestion \
-            --gen2 \
-            --runtime=python311 \
-            --region=${{ env.GCP_REGION }} \
-            --source=. \
-            --entry-point=main \
-            --trigger-http \
-            --service-account=dog-breed-ingestion@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
-            --set-env-vars DOG_API_KEY=${{ secrets.DOG_API_KEY }},DATASET=raw,GCS_BUCKET=${{ secrets.GCS_BUCKET }},DESTINATION__BIGQUERY__LOCATION=EU \
-            --timeout=540s \
-            --memory=1Gi \
-            --max-instances=1
+          poetry install
+          poetry run python src/runner.py
 
       - name: Install dbt dependencies
         working-directory: dbt/dog_breed_explorer
@@ -117,13 +97,15 @@ jobs:
           poetry install
           poetry run dbt deps
 
-      - name: Run dbt against prod
+      - name: Run dbt (prod)
         working-directory: dbt/dog_breed_explorer
-        run: |
-          poetry run dbt run --target prod
-          poetry run dbt test --target prod --store-failures
+        run: poetry run dbt run --target prod
 
-      - name: Report test results to Cloud Logging
+      - name: Test dbt (prod)
+        working-directory: dbt/dog_breed_explorer
+        run: poetry run dbt test --target prod --store-failures
+
+      - name: Report test results
         if: always()
         working-directory: dbt
         run: |
@@ -132,32 +114,10 @@ jobs:
 
       - name: Generate dbt docs
         working-directory: dbt/dog_breed_explorer
-        run: |
-          poetry run dbt docs generate --target prod
+        run: poetry run dbt docs generate --target prod
 
       - name: Upload docs to GCS
         run: |
           gsutil -m rsync -r dbt/dog_breed_explorer/target/ gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/
           gsutil setmeta -h "Content-Type:text/html" gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html
-          echo "📚 Docs available at: https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html"
-
-      - name: Upload dbt artifacts
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: dbt-artifacts-prod
-          path: |
-            dbt/dog_breed_explorer/target/run_results.json
-            dbt/dog_breed_explorer/target/manifest.json
-            dbt/dog_breed_explorer/target/catalog.json
-
-      - name: Notify on success
-        if: success()
-        run: |
-          echo "✅ Deployment successful!"
-          echo "📊 dbt docs: https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html"
-
-      - name: Notify on failure
-        if: failure()
-        run: |
-          echo "::error::Deployment failed! Check logs for details."
+          echo "📚 Docs: https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html"
