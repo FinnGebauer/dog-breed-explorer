@@ -1,38 +1,150 @@
-name: CI
+name: CI/CD Pipeline
 
 on:
   pull_request:
+    branches: [main]
   push:
-    branches: ["main"]
+    branches: [main]
+
+env:
+  PYTHON_VERSION: "3.11"
+  DBT_PROFILES_DIR: ${{ github.workspace }}/dbt/dog_breed_explorer
+  GCP_PROJECT_ID: dog-breed-explorer-478808
+  GCP_REGION: europe-west3
 
 jobs:
-  ci:
+  test:
+    name: Run Tests
     runs-on: ubuntu-latest
-
+    if: github.event_name == 'pull_request'
+    
     steps:
-    - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
-    - name: Set up Python
-      uses: actions/setup-python@v4
-      with:
-        python-version: "3.11"
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
 
-    - name: Install Poetry
-      run: |
-        curl -sSL https://install.python-poetry.org | python3 -
-        echo "$HOME/.local/bin" >> $GITHUB_PATH
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
 
-    - name: Install dependencies
-      run: |
-        poetry install
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
 
-    - name: Lint
-      run: |
-        poetry run ruff check .
-        poetry run black --check .
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-    - name: Run unit tests
-      run: |
-        poetry run pytest -q
+      - name: Install dbt dependencies
+        working-directory: dbt/dog_breed_explorer
+        run: |
+          poetry install
+          poetry run dbt deps
 
-        
+      - name: Run dbt against dev
+        working-directory: dbt/dog_breed_explorer
+        env:
+          DBT_TARGET: dev
+        run: |
+          poetry run dbt run --target dev
+          poetry run dbt test --target dev --store-failures
+
+      - name: Report test results to Cloud Logging
+        if: always()
+        working-directory: dbt
+        run: |
+          pip install google-cloud-logging
+          python dbt_test_reporter.py
+
+      - name: Upload dbt artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts
+          path: |
+            dbt/dog_breed_explorer/target/run_results.json
+            dbt/dog_breed_explorer/target/manifest.json
+
+  deploy:
+    name: Deploy to Production
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: ${{ env.PYTHON_VERSION }}
+
+      - name: Authenticate to Google Cloud
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Install Poetry
+        run: |
+          curl -sSL https://install.python-poetry.org | python3 -
+          echo "$HOME/.local/bin" >> $GITHUB_PATH
+
+      - name: Deploy Cloud Function (ingestion)
+        working-directory: infra
+        run: |
+          # Use Terraform to deploy
+          terraform init -backend-config="bucket=dog_breed_explorer_tf_state"
+          terraform apply -auto-approve \
+            -var="gcp_project=${{ env.GCP_PROJECT_ID }}" \
+            -var="region=${{ env.GCP_REGION }}" \
+            -var="dog_api_key=${{ secrets.DOG_API_KEY }}" \
+            -var="gcs_bucket=${{ secrets.GCS_BUCKET }}" \
+            -var="alert_email=${{ secrets.ALERT_EMAIL }}"
+
+      - name: Install dbt dependencies
+        working-directory: dbt/dog_breed_explorer
+        run: |
+          poetry install
+          poetry run dbt deps
+
+      - name: Run dbt against prod
+        working-directory: dbt/dog_breed_explorer
+        env:
+          DBT_TARGET: prod
+        run: |
+          poetry run dbt run --target prod
+          poetry run dbt test --target prod --store-failures
+
+      - name: Report test results to Cloud Logging
+        if: always()
+        working-directory: dbt
+        run: |
+          pip install google-cloud-logging
+          python dbt_test_reporter.py
+
+      - name: Generate dbt docs
+        working-directory: dbt/dog_breed_explorer
+        run: |
+          poetry run dbt docs generate --target prod
+
+      - name: Upload docs to GCS
+        run: |
+          gsutil -m cp -r dbt/dog_breed_explorer/target/index.html gs://${{ secrets.GCS_BUCKET }}/docs/
+          gsutil -m cp -r dbt/dog_breed_explorer/target/catalog.json gs://${{ secrets.GCS_BUCKET }}/docs/
+          gsutil -m cp -r dbt/dog_breed_explorer/target/manifest.json gs://${{ secrets.GCS_BUCKET }}/docs/
+          gsutil -m cp -r dbt/dog_breed_explorer/target/run_results.json gs://${{ secrets.GCS_BUCKET }}/docs/
+          gsutil setmeta -h "Content-Type:text/html" gs://${{ secrets.GCS_BUCKET }}/docs/index.html
+          echo "📚 Docs available at: https://storage.googleapis.com/${{ secrets.GCS_BUCKET }}/docs/index.html"
+
+      - name: Notify on failure
+        if: failure()
+        run: |
+          echo "::error::Deployment failed! Check logs for details."

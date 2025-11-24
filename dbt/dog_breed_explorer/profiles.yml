@@ -3,26 +3,26 @@ dog_breed_explorer:
   outputs:
     dev:
       type: bigquery
-      method: service-account
-      project: "{{ env_var('DBT_GCP_PROJECT') }}"
-      schema: "{{ env_var('DATASET', 'dog_breeds_dev') }}"
-      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      method: oauth  # Use OAuth for local development
+      project: dog-breed-explorer-478808
+      dataset: dog_breeds_dev
       threads: 4
       location: EU
 
     prod:
       type: bigquery
-      method: service-account
-      project: "{{ env_var('DBT_GCP_PROJECT') }}"
-      schema: "{{ env_var('DATASET', 'dog_breeds_prod') }}"
-      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
+      method: "{{ env_var('DBT_AUTH_METHOD', 'oauth') }}"  # OAuth locally, service-account in CI/CD
+      project: dog-breed-explorer-478808
+      dataset: dog_breeds_prod
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS', '') }}"  # Only needed for service-account
       threads: 4
       location: EU
 
     ci:
       type: bigquery
-      method: oauth
-      project: "dummy"
-      schema: "dog_breeds_ci"
+      method: service-account  # CI always uses service account
+      project: dog-breed-explorer-478808
+      dataset: dog_breeds_ci
+      keyfile: "{{ env_var('GOOGLE_APPLICATION_CREDENTIALS') }}"
       threads: 1
       location: EU

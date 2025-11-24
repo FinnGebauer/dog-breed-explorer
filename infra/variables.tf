@@ -1,13 +1,33 @@
-variable "project_id" {
-  type = string
+variable "gcp_project" {
+  type        = string
+  description = "GCP project ID"
 }
 
 variable "region" {
-  type    = string
-  default = "europe-west3"
+  type        = string
+  default     = "europe-west3"
+  description = "GCP region for Cloud Run and Artifact Registry"
 }
 
-variable "location" {
-  type    = string
-  default = "EU"
+variable "bigquery_location" {
+  type        = string
+  default     = "EU"
+  description = "BigQuery dataset location"
+}
+
+variable "dog_api_key" {
+  type        = string
+  sensitive   = true
+  description = "API key for The Dog API"
+}
+
+variable "gcs_bucket" {
+  type        = string
+  description = "GCS bucket for raw data storage"
+}
+
+variable "alert_email" {
+  type        = string
+  description = "Email address for dbt test failure alerts"
+  default     = ""
 }

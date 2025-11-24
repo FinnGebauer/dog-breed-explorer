@@ -2,7 +2,7 @@ version: 2
 
 sources:
   - name: raw
-    database: "{{ env_var('DBT_GCP_PROJECT') }}"
+    database: "{{ target.project }}"
     schema: raw
     tables:
       - name: dog_api_raw

@@ -10,28 +10,34 @@ terraform {
 }
 
 provider "google" {
-  project = var.project_id
+  project = var.gcp_project
   region  = var.region
 }
 
 # Storage bucket for raw data
 resource "google_storage_bucket" "raw" {
-  name     = "${var.project_id}-dog-raw"
-  location = var.location
+  name     = "${var.gcp_project}-dog-raw"
+  location = var.bigquery_location
   uniform_bucket_level_access = true
 }
 
 # BigQuery datasets
 resource "google_bigquery_dataset" "bronze" {
   dataset_id                  = "bronze"
-  location                    = var.location
+  location                    = var.bigquery_location
   delete_contents_on_destroy  = true
 }
 
 resource "google_bigquery_dataset" "curated" {
   dataset_id                  = "curated"
-  location                    = var.location
+  location                    = var.bigquery_location
   delete_contents_on_destroy  = true
+}
+
+resource "google_bigquery_dataset" "raw" {
+  dataset_id = "raw"
+  location   = var.bigquery_location
+  delete_contents_on_destroy = false
 }
 
 # Service account for ingestion
@@ -47,8 +53,30 @@ resource "google_storage_bucket_iam_member" "ingest_writer" {
   member = "serviceAccount:${google_service_account.ingest_sa.email}"
 }
 
-resource "google_bigquery_dataset_iam_member" "bronze_writer" {
-  dataset_id = google_bigquery_dataset.bronze.dataset_id
+resource "google_bigquery_dataset_iam_member" "raw_writer" {
+  dataset_id = google_bigquery_dataset.raw.dataset_id
   role       = "roles/bigquery.dataEditor"
   member     = "serviceAccount:${google_service_account.ingest_sa.email}"
+}
+
+#############################################
+# DBT DOCS HOSTING
+#############################################
+
+resource "google_storage_bucket" "dbt_docs" {
+  name     = "${var.gcp_project}-dbt-docs"
+  location = var.bigquery_location
+  
+  uniform_bucket_level_access = true
+  
+  website {
+    main_page_suffix = "index.html"
+  }
+}
+
+# Make docs publicly accessible
+resource "google_storage_bucket_iam_member" "dbt_docs_public" {
+  bucket = google_storage_bucket.dbt_docs.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
 }
