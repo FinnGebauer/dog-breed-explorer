@@ -21,19 +21,6 @@ resource "google_storage_bucket" "raw" {
   uniform_bucket_level_access = true
 }
 
-# BigQuery datasets
-resource "google_bigquery_dataset" "bronze" {
-  dataset_id                  = "bronze"
-  location                    = var.bigquery_location
-  delete_contents_on_destroy  = true
-}
-
-resource "google_bigquery_dataset" "curated" {
-  dataset_id                  = "curated"
-  location                    = var.bigquery_location
-  delete_contents_on_destroy  = true
-}
-
 resource "google_bigquery_dataset" "raw" {
   dataset_id = "raw"
   location   = var.bigquery_location
