@@ -8,7 +8,6 @@ on:
 
 env:
   PYTHON_VERSION: "3.11"
-  DBT_PROFILES_DIR: ${{ github.workspace }}/dbt/dog_breed_explorer
   GCP_PROJECT_ID: dog-breed-explorer-478808
   GCP_REGION: europe-west3
 
@@ -48,8 +47,6 @@ jobs:
 
       - name: Run dbt against dev
         working-directory: dbt/dog_breed_explorer
-        env:
-          DBT_TARGET: dev
         run: |
           poetry run dbt run --target dev
           poetry run dbt test --target dev --store-failures
@@ -65,7 +62,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: dbt-artifacts
+          name: dbt-artifacts-dev
           path: |
             dbt/dog_breed_explorer/target/run_results.json
             dbt/dog_breed_explorer/target/manifest.json
@@ -97,17 +94,22 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
-      - name: Deploy Cloud Function (ingestion)
-        working-directory: infra
+      # Deploy Cloud Function directly (no Terraform)
+      - name: Deploy ingestion Cloud Function
         run: |
-          # Use Terraform to deploy
-          terraform init -backend-config="bucket=dog_breed_explorer_tf_state"
-          terraform apply -auto-approve \
-            -var="gcp_project=${{ env.GCP_PROJECT_ID }}" \
-            -var="region=${{ env.GCP_REGION }}" \
-            -var="dog_api_key=${{ secrets.DOG_API_KEY }}" \
-            -var="gcs_bucket=${{ secrets.GCS_BUCKET }}" \
-            -var="alert_email=${{ secrets.ALERT_EMAIL }}"
+          cd ingest
+          gcloud functions deploy dog-breed-ingestion \
+            --gen2 \
+            --runtime=python311 \
+            --region=${{ env.GCP_REGION }} \
+            --source=. \
+            --entry-point=main \
+            --trigger-http \
+            --service-account=dog-breed-ingestion@${{ env.GCP_PROJECT_ID }}.iam.gserviceaccount.com \
+            --set-env-vars DOG_API_KEY=${{ secrets.DOG_API_KEY }},DATASET=raw,GCS_BUCKET=${{ secrets.GCS_BUCKET }},DESTINATION__BIGQUERY__LOCATION=EU \
+            --timeout=540s \
+            --memory=1Gi \
+            --max-instances=1
 
       - name: Install dbt dependencies
         working-directory: dbt/dog_breed_explorer
@@ -117,8 +119,6 @@ jobs:
 
       - name: Run dbt against prod
         working-directory: dbt/dog_breed_explorer
-        env:
-          DBT_TARGET: prod
         run: |
           poetry run dbt run --target prod
           poetry run dbt test --target prod --store-failures
@@ -137,12 +137,25 @@ jobs:
 
       - name: Upload docs to GCS
         run: |
-          gsutil -m cp -r dbt/dog_breed_explorer/target/index.html gs://${{ secrets.GCS_BUCKET }}/docs/
-          gsutil -m cp -r dbt/dog_breed_explorer/target/catalog.json gs://${{ secrets.GCS_BUCKET }}/docs/
-          gsutil -m cp -r dbt/dog_breed_explorer/target/manifest.json gs://${{ secrets.GCS_BUCKET }}/docs/
-          gsutil -m cp -r dbt/dog_breed_explorer/target/run_results.json gs://${{ secrets.GCS_BUCKET }}/docs/
-          gsutil setmeta -h "Content-Type:text/html" gs://${{ secrets.GCS_BUCKET }}/docs/index.html
-          echo "📚 Docs available at: https://storage.googleapis.com/${{ secrets.GCS_BUCKET }}/docs/index.html"
+          gsutil -m rsync -r dbt/dog_breed_explorer/target/ gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/
+          gsutil setmeta -h "Content-Type:text/html" gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html
+          echo "📚 Docs available at: https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html"
+
+      - name: Upload dbt artifacts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: dbt-artifacts-prod
+          path: |
+            dbt/dog_breed_explorer/target/run_results.json
+            dbt/dog_breed_explorer/target/manifest.json
+            dbt/dog_breed_explorer/target/catalog.json
+
+      - name: Notify on success
+        if: success()
+        run: |
+          echo "✅ Deployment successful!"
+          echo "📊 dbt docs: https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html"
 
       - name: Notify on failure
         if: failure()
