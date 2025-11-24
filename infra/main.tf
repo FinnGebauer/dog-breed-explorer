@@ -200,3 +200,32 @@ resource "google_cloud_scheduler_job" "ingestion_schedule" {
   }
 }
 
+#############################################
+# DBT DOCS HOSTING
+#############################################
+
+resource "google_storage_bucket" "dbt_docs" {
+  name     = "${var.gcp_project}-dbt-docs"
+  location = var.bigquery_location
+  
+  uniform_bucket_level_access = true
+  
+  website {
+    main_page_suffix = "index.html"
+  }
+}
+
+# Make docs publicly accessible
+resource "google_storage_bucket_iam_member" "dbt_docs_public" {
+  bucket = google_storage_bucket.dbt_docs.name
+  role   = "roles/storage.objectViewer"
+  member = "allUsers"
+}
+
+# Grant CI/CD service account write access
+resource "google_storage_bucket_iam_member" "dbt_docs_cicd" {
+  bucket = google_storage_bucket.dbt_docs.name
+  role   = "roles/storage.objectAdmin"
+  member = "serviceAccount:github-actions@${var.gcp_project}.iam.gserviceaccount.com"
+}
+
