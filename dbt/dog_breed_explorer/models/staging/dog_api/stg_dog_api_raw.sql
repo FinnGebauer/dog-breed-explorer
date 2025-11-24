@@ -6,6 +6,7 @@
 --   - Renames fields into a consistent naming convention
 --   - Parses weight, height, and lifespan ranges into numeric min/max columns
 --   - Ensures stable primary keys (breed_id)
+--   - **De-duplicates records, keeping the most recent load**
 --   - Preserves raw descriptive fields for reference
 --   - Exposes dlt lineage metadata (_dlt_id, _dlt_load_id)
 --
@@ -81,10 +82,24 @@ renamed AS (
 
         -- dlt metadata
         _dlt_load_id,
-        _dlt_id
+        _dlt_id,
+
+        -- Row number to identify duplicates (keep most recent load)
+        ROW_NUMBER() OVER (
+            PARTITION BY id 
+            ORDER BY _dlt_load_id DESC, _dlt_id DESC
+        ) AS row_num
 
     FROM source
 
+),
+
+deduplicated AS (
+    SELECT * 
+    FROM renamed
+    WHERE row_num = 1
 )
 
-SELECT * FROM renamed
+SELECT 
+    * EXCEPT(row_num)
+FROM deduplicated

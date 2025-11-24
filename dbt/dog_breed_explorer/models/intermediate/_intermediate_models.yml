@@ -1,0 +1,151 @@
+version: 2
+
+models:
+  - name: int_family_friendly_score
+    description: |
+      Calculates family-friendliness scores for dog breeds based on temperament analysis.
+    
+    columns:
+      - name: breed_id
+        description: "Unique identifier for the dog breed (primary key)"
+        tests:
+          - unique
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: int64
+      
+      - name: breed_name
+        description: "Name of the dog breed"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: string
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 1
+              max_value: 100
+      
+      - name: temperament
+        description: "Raw temperament string from the Dog API (comma-separated traits)"
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: string
+          - dbt_expectations.expect_column_value_lengths_to_be_between:
+              min_value: 1
+              max_value: 500
+      
+      - name: positive_score
+        description: |
+          Sum of weighted scores for family-friendly traits found in temperament.
+          Higher values indicate more family-friendly characteristics.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: int64
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: 0
+              max_value: 200
+          - dbt_expectations.expect_column_values_to_be_in_type_list:
+              column_type_list: [int64, integer]
+      
+      - name: negative_score
+        description: |
+          Sum of penalties for cautionary traits found in temperament.
+          Always ≤ 0. More negative values indicate less family-friendly characteristics.
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: int64
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -200
+              max_value: 0
+              strictly: false
+      
+      - name: family_friendly_score
+        description: |
+          Net family-friendliness score (positive_score + negative_score).
+          Used for ranking breeds. Higher is better.
+          - Score ≥ 6: Highly family-friendly
+          - Score 3-5: Family-friendly
+          - Score 0-2: Moderately suitable
+          - Score < 0: Less suitable
+        tests:
+          - not_null
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: int64
+          - dbt_expectations.expect_column_values_to_be_between:
+              min_value: -200
+              max_value: 200
+      
+      - name: is_family_friendly
+        description: |
+          Boolean flag indicating if breed is family-friendly (score ≥ 3).
+          Useful for simple filtering queries.
+        tests:
+          - not_null
+      
+      - name: family_friendly_category
+        description: |
+          Categorical classification of family-friendliness based on score ranges:
+          - 'highly_family_friendly': score ≥ 6
+          - 'family_friendly': score 3-5
+          - 'moderately_suitable': score 0-2
+          - 'less_suitable': score < 0
+        tests:
+          - not_null
+          - accepted_values:
+              values: 
+                - 'highly_family_friendly'
+                - 'family_friendly'
+                - 'moderately_suitable'
+                - 'less_suitable'
+          - dbt_expectations.expect_column_values_to_be_of_type:
+              column_type: string
+    
+    tests:
+      # Relationship tests using dbt-utils
+      - dbt_utils.expression_is_true:
+          expression: "family_friendly_score = positive_score + negative_score"
+          config:
+            severity: warn
+      
+      - dbt_utils.expression_is_true:
+          expression: "(is_family_friendly = TRUE AND family_friendly_score >= 3) OR (is_family_friendly = FALSE AND family_friendly_score < 3)"
+          config:
+            severity: warn
+      
+      - dbt_utils.expression_is_true:
+          expression: |
+            CASE 
+              WHEN family_friendly_score >= 6 THEN family_friendly_category = 'highly_family_friendly'
+              WHEN family_friendly_score >= 3 THEN family_friendly_category = 'family_friendly'
+              WHEN family_friendly_score >= 0 THEN family_friendly_category = 'moderately_suitable'
+              ELSE family_friendly_category = 'less_suitable'
+            END
+          config:
+            severity: warn
+      
+      # Table-level Great Expectations tests
+      - dbt_expectations.expect_table_row_count_to_be_between:
+          min_value: 1
+          max_value: 500
+      
+      - dbt_expectations.expect_table_columns_to_match_ordered_list:
+          column_list: 
+            - breed_id
+            - breed_name
+            - temperament
+            - positive_score
+            - negative_score
+            - family_friendly_score
+            - is_family_friendly
+            - family_friendly_category
+      
+      - dbt_expectations.expect_compound_columns_to_be_unique:
+          column_list: ["breed_id", "breed_name"]
+      
+      # Statistical tests
+      - dbt_expectations.expect_column_pair_values_A_to_be_greater_than_B:
+          column_A: positive_score
+          column_B: negative_score
+          or_equal: true
