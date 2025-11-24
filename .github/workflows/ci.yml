@@ -119,6 +119,7 @@ jobs:
 
       - name: Upload docs to GCS
         run: |
-          gsutil -m rsync -r dbt/dog_breed_explorer/target/ gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/
-          gsutil setmeta -h "Content-Type:text/html" gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html
+          # Use gcloud storage (newer, better integrated)
+          gcloud storage cp -r dbt/dog_breed_explorer/target/* gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/
+          gcloud storage objects update gs://${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html --content-type=text/html
           echo "📚 Docs: https://storage.googleapis.com/${{ env.GCP_PROJECT_ID }}-dbt-docs/index.html"
