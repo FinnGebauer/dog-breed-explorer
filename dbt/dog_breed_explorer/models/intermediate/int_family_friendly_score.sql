@@ -92,7 +92,7 @@ breed_scores AS (
         COALESCE(
             SUM(
                 CASE
-                    WHEN LOWER(temperament) LIKE '%' || LOWER(fft.trait) || '%'
+                    WHEN LOWER(temperament) LIKE CONCAT('%', LOWER(fft.trait), '%')
                     THEN fft.weight
                     ELSE 0
                 END
@@ -104,7 +104,7 @@ breed_scores AS (
         COALESCE(
             SUM(
                 CASE
-                    WHEN LOWER(temperament) LIKE '%' || LOWER(ct.trait) || '%'
+                    WHEN LOWER(temperament) LIKE CONCAT('%', LOWER(ct.trait), '%')
                     THEN ct.penalty
                     ELSE 0
                 END
