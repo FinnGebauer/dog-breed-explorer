@@ -5,36 +5,56 @@
 --   descriptive attributes from the staging layer that can be joined to fact
 --   tables. This model:
 --     - Ensures a unique record per breed_id (guaranteed by staging)
---     - Keeps descriptive/categorical fields
---     - Enriches with family-friendly scoring
---     - Leaves metrics to fact tables
+--     - Keeps descriptive/categorical fields only (no metrics)
+--     - Enriches with family-friendly scoring from intermediate layer
+--     - Provides business-friendly attributes for filtering and grouping
+--
+-- Why metrics are excluded:
+--   Dimensional modeling best practice separates dimensions (who/what/where)
+--   from facts (measures/metrics). Weight, height, and lifespan measurements
+--   belong in fact_breed_metrics for proper grain definition and aggregation.
 
 WITH base_breeds AS (
     SELECT * FROM {{ ref('stg_dog_api_raw') }}
 ),
 
 family_scores AS (
-    SELECT * FROM {{ ref('int_family_friendly_score') }}
+    SELECT * FROM {{ ref('int_calculate_family_friendly_score') }}
 ),
 
 final AS (
     SELECT
+        -- Primary key
         bb.breed_id,
+        
+        -- Breed identification
         bb.breed_name,
         bb.breed_group,
-        bb.temperament,
-        bb.life_span_raw AS life_span,
-        bb.weight_imperial_raw AS weight_imperial,
-        bb.height_imperial_raw AS height_imperial,
-        bb.origin,
         bb.bred_for,
         
-        -- Add family-friendly metrics
-        COALESCE(fs.family_friendly_score, 0) AS family_friendly_score,
-        COALESCE(fs.is_family_friendly, FALSE) AS is_family_friendly,
-        COALESCE(fs.family_friendly_category, 'unknown') AS family_friendly_category,
+        -- Geographic attributes
+        bb.origin,
+        bb.country_code,
         
-        bb._dlt_load_id AS loaded_at
+        -- Descriptive characteristics (text fields, not metrics)
+        bb.description,
+        bb.history,
+        
+        -- Family-friendly enrichment
+        fs.family_friendly_score,
+        fs.is_family_friendly,
+        fs.family_friendly_category,
+
+         -- Size classification (derived from staging weight)
+        CASE
+            WHEN SAFE_DIVIDE(bb.weight_kg_min + bb.weight_kg_max, 2) < 10 THEN "Small (<10kg)"
+            WHEN SAFE_DIVIDE(bb.weight_kg_min + bb.weight_kg_max, 2) < 25 THEN "Medium (10-25kg)"
+            WHEN SAFE_DIVIDE(bb.weight_kg_min + bb.weight_kg_max, 2) < 45 THEN "Large (25-45kg)"
+            ELSE "Giant (>45kg)"
+        END AS weight_class,
+        
+        -- Image reference
+        bb.reference_image_id
         
     FROM base_breeds AS bb
     LEFT JOIN family_scores AS fs

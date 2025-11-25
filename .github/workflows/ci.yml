@@ -80,6 +80,12 @@ jobs:
           curl -sSL https://install.python-poetry.org | python3 -
           echo "$HOME/.local/bin" >> $GITHUB_PATH
 
+      - name: Run ingestion tests
+        working-directory: ingest
+        run: |
+          poetry install
+          poetry run pytest tests/
+
       - name: Run ingestion (dlt)
         working-directory: ingest
         env:

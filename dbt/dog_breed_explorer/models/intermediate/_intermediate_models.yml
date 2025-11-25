@@ -1,7 +1,7 @@
 version: 2
 
 models:
-  - name: int_family_friendly_score
+  - name: int_calculate_family_friendly_score
     description: |
       Calculates family-friendliness scores for dog breeds based on temperament analysis.
     

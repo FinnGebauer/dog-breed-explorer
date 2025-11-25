@@ -41,5 +41,5 @@ models:
       +materialized: table
       +schema: marts 
   
-  tests:
-    +store_failures: true
+tests:
+  +store_failures: true

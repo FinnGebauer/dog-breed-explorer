@@ -1,4 +1,4 @@
--- MODEL: int_family_friendly_score
+-- MODEL: _friendly_score
 --
 -- Purpose:
 --   This intermediate model calculates a family-friendliness score for each dog breed
@@ -82,67 +82,50 @@ cautionary_traits AS (
     ])
 ),
 
-breed_scores AS (
-    SELECT
-        breed_id,
-        breed_name,
-        temperament,
-        
-        -- Calculate positive score
-        COALESCE(
-            SUM(
-                CASE
-                    WHEN LOWER(temperament) LIKE CONCAT('%', LOWER(fft.trait), '%')
-                    THEN fft.weight
-                    ELSE 0
-                END
-            ),
-            0
-        ) AS positive_score,
-        
-        -- Calculate negative score
-        COALESCE(
-            SUM(
-                CASE
-                    WHEN LOWER(temperament) LIKE CONCAT('%', LOWER(ct.trait), '%')
-                    THEN ct.penalty
-                    ELSE 0
-                END
-            ),
-            0
-        ) AS negative_score
-        
-    FROM source
-    CROSS JOIN family_friendly_traits AS fft
-    CROSS JOIN cautionary_traits AS ct
-    WHERE temperament IS NOT NULL AND temperament != ''
-    GROUP BY breed_id, breed_name, temperament
+positive_scores AS (
+  SELECT
+    breed_id,
+    SUM(weight) AS positive_score
+  FROM source s
+  JOIN family_friendly_traits fft
+    ON LOWER(s.temperament) LIKE CONCAT('%', LOWER(fft.trait), '%')
+  GROUP BY breed_id
+),
+
+negative_scores AS (
+  SELECT
+    breed_id,
+    SUM(penalty) AS negative_score
+  FROM source s
+  JOIN cautionary_traits ct
+    ON LOWER(s.temperament) LIKE CONCAT('%', LOWER(ct.trait), '%')
+  GROUP BY breed_id
 ),
 
 final AS (
-    SELECT
-        breed_id,
-        breed_name,
-        temperament,
-        positive_score,
-        negative_score,
-        positive_score + negative_score AS family_friendly_score,
-        
-        -- Create flag based on threshold (score >= 3)
-        CASE
-            WHEN positive_score + negative_score >= 3 THEN TRUE
-            ELSE FALSE
-        END AS is_family_friendly,
-        
-        -- Categorize by score ranges
-        CASE
-            WHEN positive_score + negative_score >= 6 THEN 'highly_family_friendly'
-            WHEN positive_score + negative_score >= 3 THEN 'family_friendly'
-            WHEN positive_score + negative_score >= 0 THEN 'moderately_suitable'
-            ELSE 'less_suitable'
-        END AS family_friendly_category
-        
-    FROM breed_scores
+SELECT
+  s.breed_id,
+  s.breed_name,
+  s.temperament,
+  COALESCE(p.positive_score, 0) AS positive_score,
+  COALESCE(n.negative_score, 0) AS negative_score,
+  COALESCE(p.positive_score, 0) + COALESCE(n.negative_score, 0) AS family_friendly_score,
+  -- Create flag based on threshold (score >= 3) 
+  CASE 
+    WHEN COALESCE(positive_score, 0) + COALESCE(negative_score, 0) >= 3 
+    THEN TRUE 
+    ELSE FALSE 
+  END AS is_family_friendly, 
+  -- Categorise by score ranges 
+  CASE
+    WHEN COALESCE(positive_score, 0) + COALESCE(negative_score, 0) >= 6 THEN 'highly_family_friendly'
+    WHEN COALESCE(positive_score, 0) + COALESCE(negative_score, 0) >= 3 THEN 'family_friendly'
+    WHEN COALESCE(positive_score, 0) + COALESCE(negative_score, 0) >= 0 THEN 'moderately_suitable'
+    ELSE 'less_suitable'
+END AS family_friendly_category
+FROM source s
+LEFT JOIN positive_scores p USING (breed_id)
+LEFT JOIN negative_scores n USING (breed_id)
 )
 
 SELECT * FROM final

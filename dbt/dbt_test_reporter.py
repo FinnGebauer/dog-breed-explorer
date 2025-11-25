@@ -1,20 +1,18 @@
 import json
-import logging
 import sys
 from pathlib import Path
-import google.cloud.logging
 
 
 def report_dbt_test_results():
     """Report dbt test results to Cloud Logging."""
-    logging_client = google.cloud.logging.Client()
-    logging_client.setup_logging()
-    
-    # Find run_results.json
     results_path = Path("dog_breed_explorer/target/run_results.json")
     
     if not results_path.exists():
-        logging.warning("No run_results.json found - tests may not have run")
+        print(json.dumps({
+            "message": "No run_results.json found - tests may not have run",
+            "severity": "WARNING",
+            "component": "dbt-tests"
+        }))
         return
     
     with open(results_path) as f:
@@ -42,7 +40,6 @@ def report_dbt_test_results():
         elif r["status"] == "pass":
             passes += 1
 
-    # Log summary
     summary = {
         "total_tests": len(results.get("results", [])),
         "passed": passes,
@@ -51,25 +48,30 @@ def report_dbt_test_results():
     }
 
     if errors:
-        logging.error(
-            f"❌ dbt test failures detected: {len(errors)} failed, {len(warnings)} warnings",
-            extra={
-                "dbt_errors": errors,
-                "dbt_warnings": warnings,
-                "summary": summary,
-            }
-        )
-        sys.exit(1)  # Exit with error code for CI/CD
+        print(json.dumps({
+            "message": f"❌ dbt test failures detected: {len(errors)} failed, {len(warnings)} warnings",
+            "dbt_errors": errors,
+            "dbt_warnings": warnings,
+            "summary": summary,
+            "severity": "ERROR",
+            "component": "dbt-tests"
+        }))
+        sys.exit(1)
     elif warnings:
-        logging.warning(
-            f"⚠️  dbt tests passed with warnings: {len(warnings)} warnings",
-            extra={"dbt_warnings": warnings, "summary": summary}
-        )
+        print(json.dumps({
+            "message": f"⚠️  dbt tests passed with warnings: {len(warnings)} warnings",
+            "dbt_warnings": warnings,
+            "summary": summary,
+            "severity": "WARNING",
+            "component": "dbt-tests"
+        }))
     else:
-        logging.info(
-            f"✅ All dbt tests passed! ({passes} tests)",
-            extra={"summary": summary}
-        )
+        print(json.dumps({
+            "message": f"✅ All dbt tests passed! ({passes} tests)",
+            "summary": summary,
+            "severity": "INFO",
+            "component": "dbt-tests"
+        }))
 
 
 if __name__ == "__main__":

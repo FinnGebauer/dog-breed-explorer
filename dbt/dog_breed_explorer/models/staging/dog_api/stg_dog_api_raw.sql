@@ -7,6 +7,7 @@
 --   - Parses weight, height, and lifespan ranges into numeric min/max columns
 --   - Ensures stable primary keys (breed_id)
 --   - **De-duplicates records, keeping the most recent load**
+--   - **Converts empty strings to NULL across all columns**
 --   - Preserves raw descriptive fields for reference
 --   - Exposes dlt lineage metadata (_dlt_id, _dlt_load_id)
 --
@@ -29,56 +30,66 @@ renamed AS (
         id AS breed_id,
 
         -- breed information
-        name AS breed_name,
-        breed_group,
-        bred_for,
-        origin,
-        country_code,
+        NULLIF(TRIM(name), '') AS breed_name,
+        NULLIF(TRIM(breed_group), '') AS breed_group,
+        NULLIF(TRIM(bred_for), '') AS bred_for,
+        NULLIF(TRIM(origin), '') AS origin,
+        NULLIF(TRIM(country_code), '') AS country_code,
 
         -- characteristics
-        temperament,
-        description,
-        history,
+        NULLIF(TRIM(temperament), '') AS temperament,
+        NULLIF(TRIM(description), '') AS description,
+        NULLIF(TRIM(history), '') AS history,
 
         -- measurements - weight
-        weight__metric AS weight_metric_raw,
-        weight__imperial AS weight_imperial_raw,
+        NULLIF(TRIM(weight__metric), '') AS weight_metric_raw,
+        NULLIF(TRIM(weight__imperial), '') AS weight_imperial_raw,
         SAFE_CAST(
             REGEXP_EXTRACT(
-                CASE WHEN weight__metric IN ('NaN', 'null', '') THEN NULL ELSE weight__metric END,
+                NULLIF(TRIM(weight__metric), ''),
                 r'^(\d+)'
             ) AS INT64
         ) AS weight_kg_min,
         SAFE_CAST(
             REGEXP_EXTRACT(
-                CASE WHEN weight__metric IN ('NaN', 'null', '') THEN NULL ELSE weight__metric END,
+                NULLIF(TRIM(weight__metric), ''),
                 r'(\d+)$'
             ) AS INT64
         ) AS weight_kg_max,
 
         -- measurements - height
-        height__metric AS height_metric_raw,
-        height__imperial AS height_imperial_raw,
+        NULLIF(TRIM(height__metric), '') AS height_metric_raw,
+        NULLIF(TRIM(height__imperial), '') AS height_imperial_raw,
         SAFE_CAST(
             REGEXP_EXTRACT(
-                CASE WHEN height__metric IN ('NaN', 'null', '') THEN NULL ELSE height__metric END,
+                NULLIF(TRIM(height__metric), ''),
                 r'^(\d+)'
             ) AS INT64
         ) AS height_cm_min,
         SAFE_CAST(
             REGEXP_EXTRACT(
-                CASE WHEN height__metric IN ('NaN', 'null', '') THEN NULL ELSE height__metric END,
+                NULLIF(TRIM(height__metric), ''),
                 r'(\d+)$'
             ) AS INT64
         ) AS height_cm_max,
 
-        -- life span (case-insensitive to handle "Years years")
-        life_span AS life_span_raw,
-        SAFE_CAST(REGEXP_EXTRACT(life_span, r'^(\d+)') AS INT64) AS life_span_years_min,
-        SAFE_CAST(REGEXP_EXTRACT(life_span, r'(\d+)\s*(?:years?|Years)') AS INT64) AS life_span_years_max,
+        -- life span
+        NULLIF(TRIM(life_span), '') AS life_span_raw,
+        SAFE_CAST(
+            REGEXP_EXTRACT(
+                NULLIF(TRIM(life_span), ''),
+                r'^(\d+)'
+            ) AS INT64
+        ) AS life_span_years_min,
+        SAFE_CAST(
+            REGEXP_EXTRACT(
+                NULLIF(TRIM(life_span), ''),
+                r'(\d+)\s*(?:years?|Years)'
+            ) AS INT64
+        ) AS life_span_years_max,
 
         -- metadata
-        reference_image_id,
+        NULLIF(TRIM(reference_image_id), '') AS reference_image_id,
 
         -- dlt metadata
         _dlt_load_id,

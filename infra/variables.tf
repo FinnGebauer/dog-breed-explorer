@@ -21,10 +21,6 @@ variable "dog_api_key" {
   description = "API key for The Dog API"
 }
 
-variable "gcs_bucket" {
-  type        = string
-  description = "GCS bucket for raw data storage"
-}
 
 variable "alert_email" {
   type        = string
