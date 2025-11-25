@@ -58,15 +58,15 @@ Monitoring: Cloud Logging + Email alerts
     │                       │                       │
     ▼                       ▼                       ▼
 Cloud Scheduler    Cloud Function (dlt)      Dog API
-(Daily 02:00)      ├─ Schema evolution    (thedogapi.com)
-                   └─ Retry logic
+(Daily 02:00)                             (thedogapi.com)
+                   
                             │
               ┌─────────────┴─────────────┐
               │                           │
               ▼                           ▼
    ┌──────────────────┐        ┌─────────────────┐
    │  Cloud Storage   │        │  BigQuery (raw) │
-   │  (JSON archive)  │        │  173 rows       │
+   │  (JSON archive)  │        │                 │
    └──────────────────┘        └────────┬────────┘
                                         │
 ┌───────────────────────────────────────┼──────────┐
