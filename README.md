@@ -113,9 +113,6 @@ Actionable Recommendation:
 Families should prioritize Medium-weight breeds scoring 70+ on family-friendliness. These dogs combine practical size, extended companionship (12-15 years), and proven child-compatible temperaments—delivering optimal value across emotional and practical dimensions.
 
 
-
-
-
 ---
 
 ## Data Model
@@ -147,13 +144,11 @@ dim_breed                    fact_breed_metrics         dim_temperaments
 
 ## Future Improvements
 
-**High Priority:**
 - Consolidate `runner.py` and `main.py` (reduce duplication)
 - Proper Cloud Logging (replace print statements)
 - Secret Manager like sops (automated rotation)
-
-**Medium Priority:**
 - Terraform modules (reusable across projects)
+- Set up dbt scheduler (currently as per project description only runs on PRs and main pushes)
 - YAML-based trait management (non-engineer updates)
 
 ---
