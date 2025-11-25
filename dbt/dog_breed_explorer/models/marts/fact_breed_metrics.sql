@@ -9,7 +9,7 @@
 --   This table supports analytical use cases like:
 --     - Ranking breeds by size or longevity
 --     - Filtering breeds by ranges
---     - Visualizing distributions (Looker Studio dashboard)
+--     - Visualising distributions (Looker Studio dashboard)
 --
 -- Notes:
 --   Each metric is computed from the cleaned staging fields using simple averages.

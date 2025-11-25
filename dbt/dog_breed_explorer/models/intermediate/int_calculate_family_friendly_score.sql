@@ -1,4 +1,4 @@
--- MODEL: _friendly_score
+-- MODEL: int_calculate_family_friendly_score 
 --
 -- Purpose:
 --   This intermediate model calculates a family-friendliness score for each dog breed
@@ -7,7 +7,7 @@
 --   - Assigns weighted scores to positive traits (e.g., gentle=3, playful=2, intelligent=1)
 --   - Applies penalties for cautionary traits (e.g., aggressive=-5, dominant=-3)
 --   - Calculates a net family_friendly_score (positive_score + negative_score)
---   - Categorizes breeds into family-friendliness levels
+--   - Categorises breeds into family-friendliness levels
 --   - Provides a boolean flag for simple filtering (score >= 3)
 --
 -- Why this model exists:

@@ -8,7 +8,7 @@
 -- Use cases:
 --   - Filter breeds by specific temperament (e.g., "Friendly")
 --   - Count breeds per temperament
---   - Analyze temperament combinations
+--   - Analyse temperament combinations
 --
 -- Grain: One row per breed_id + temperament combination
 
