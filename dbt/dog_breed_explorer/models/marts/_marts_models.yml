@@ -2,7 +2,7 @@ version: 2
 
 models:
   - name: dim_breed
-    description: |
+    description: |-
       Dimension table providing one clean record per dog breed, containing
       descriptive and categorical information useful for joining with fact tables.
     columns:
@@ -13,7 +13,8 @@ models:
           - unique
           - dbt_expectations.expect_column_values_to_be_of_type:
               column_type: int64
-      
+        data_type: int64
+
       - name: breed_name
         description: "Common name of the breed."
         tests:
@@ -23,54 +24,80 @@ models:
           - dbt_expectations.expect_column_value_lengths_to_be_between:
               min_value: 2
               max_value: 100
-      
+        data_type: string
+
       - name: breed_group
         description: "High-level breed classification (e.g. 'Hound', 'Working')."
-      
-      - name: temperament
-        description: "Comma-separated list of temperament traits"
-        tests:
-          - dbt_expectations.expect_column_value_lengths_to_be_between:
-              min_value: 1
-              max_value: 500
-              row_condition: "temperament IS NOT NULL"
-      
-      - name: life_span
-        description: "Life span range as text"
-      
+        data_type: string
+
       - name: family_friendly_score
         description: "Numeric score for family-friendliness"
         tests:
           - not_null
-      
+        data_type: int64
+
       - name: is_family_friendly
         description: "Boolean flag for family-friendliness"
         tests:
           - not_null
-      
+        data_type: boolean
+
       - name: family_friendly_category
         description: "Category classification"
         tests:
           - not_null
           - dbt_expectations.expect_column_values_to_be_in_set:
-              value_set: ['highly_family_friendly', 'family_friendly', 
-                          'moderately_suitable', 'less_suitable', 'unknown']
+              value_set:
+                - highly_family_friendly
+                - family_friendly
+                - moderately_suitable
+                - less_suitable
+                - unknown
               quote_values: true
-      
-      - name: loaded_at
-        description: "dlt load timestamp"
-        tests:
-          - not_null
-    
+        data_type: string
+
+      - name: bred_for
+        description: "Original purpose or role the breed was developed for"
+        data_type: string
+        quote: true
+
+      - name: origin
+        description: "Geographic origin or country where the breed was developed"
+        data_type: string
+        quote: true
+
+      - name: country_code
+        description: "ISO country code for the breed's country of origin"
+        data_type: string
+        quote: true
+
+      - name: description
+        description: "General description and overview of the breed"
+        data_type: string
+        quote: true
+        
+      - name: history
+        description: "Historical background and development of the breed"
+        data_type: string
+        quote: true
+
+      - name: weight_class
+        description: "Classification of breed size based on weight (e.g., small, medium, large)"
+        data_type: string
+        quote: true
+
+      - name: reference_image_id
+        description: "Identifier for the reference image of the breed"
+        data_type: string
+        quote: true
+
     tests:
-      # Table-level tests
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 50
           max_value: 500
-      
       - dbt_utils.equal_rowcount:
           compare_model: ref('stg_dog_api_raw')
-  
+
   - name: fact_breed_metrics
     description: |
       Fact table containing numeric characteristics for each dog breed, including
@@ -80,13 +107,13 @@ models:
         description: "Foreign key to dim_breed. Identifies the dog breed."
         tests:
           - not_null
-          - unique  # Should be 1:1 with dim_breed
+          - unique # Should be 1:1 with dim_breed
           - relationships:
               to: ref('dim_breed')
               field: breed_id
           - dbt_expectations.expect_column_values_to_be_of_type:
               column_type: int64
-      
+
       - name: life_span_years_min
         description: "Minimum life expectancy"
         tests:
@@ -94,7 +121,7 @@ models:
               min_value: 1
               max_value: 25
               row_condition: "life_span_years_min IS NOT NULL"
-      
+
       - name: life_span_years_max
         description: "Maximum life expectancy"
         tests:
@@ -102,7 +129,7 @@ models:
               min_value: 1
               max_value: 30
               row_condition: "life_span_years_max IS NOT NULL"
-      
+
       - name: life_span_years_avg
         description: "Average life expectancy of the breed in years."
         tests:
@@ -114,7 +141,7 @@ models:
           - dbt_expectations.expect_column_mean_to_be_between:
               min_value: 8
               max_value: 18
-      
+
       - name: weight_kg_min
         description: "Minimum weight"
         tests:
@@ -122,7 +149,7 @@ models:
               min_value: 0.5
               max_value: 100
               row_condition: "weight_kg_min IS NOT NULL"
-      
+
       - name: weight_kg_max
         description: "Maximum weight"
         tests:
@@ -130,7 +157,7 @@ models:
               min_value: 1
               max_value: 120
               row_condition: "weight_kg_max IS NOT NULL"
-      
+
       - name: weight_kg_avg
         description: "Average weight of the breed in kilograms."
         tests:
@@ -142,7 +169,7 @@ models:
           - dbt_expectations.expect_column_median_to_be_between:
               min_value: 5
               max_value: 50
-      
+
       - name: height_cm_min
         description: "Minimum height"
         tests:
@@ -150,7 +177,7 @@ models:
               min_value: 10
               max_value: 100
               row_condition: "height_cm_min IS NOT NULL"
-      
+
       - name: height_cm_max
         description: "Maximum height"
         tests:
@@ -158,7 +185,7 @@ models:
               min_value: 15
               max_value: 120
               row_condition: "height_cm_max IS NOT NULL"
-      
+
       - name: height_cm_avg
         description: "Average height of the breed in centimeters."
         tests:
@@ -167,48 +194,48 @@ models:
               max_value: 120
               strictly: false
               row_condition: "height_cm_avg IS NOT NULL"
-    
+
     tests:
       # Ensure min <= avg <= max for all metrics
       - dbt_utils.expression_is_true:
           expression: "life_span_years_min <= life_span_years_avg"
           config:
             where: "life_span_years_min IS NOT NULL AND life_span_years_avg IS NOT NULL"
-      
+
       - dbt_utils.expression_is_true:
           expression: "life_span_years_avg <= life_span_years_max"
           config:
             where: "life_span_years_avg IS NOT NULL AND life_span_years_max IS NOT NULL"
-      
+
       - dbt_utils.expression_is_true:
           expression: "weight_kg_min <= weight_kg_avg"
           config:
             where: "weight_kg_min IS NOT NULL AND weight_kg_avg IS NOT NULL"
-      
+
       - dbt_utils.expression_is_true:
           expression: "weight_kg_avg <= weight_kg_max"
           config:
             where: "weight_kg_avg IS NOT NULL AND weight_kg_max IS NOT NULL"
-      
+
       - dbt_utils.expression_is_true:
           expression: "height_cm_min <= height_cm_avg"
           config:
             where: "height_cm_min IS NOT NULL AND height_cm_avg IS NOT NULL"
-      
+
       - dbt_utils.expression_is_true:
           expression: "height_cm_avg <= height_cm_max"
           config:
             where: "height_cm_avg IS NOT NULL AND height_cm_max IS NOT NULL"
-      
+
       # Row count should match dim_breed (1:1 relationship)
       - dbt_utils.equal_rowcount:
           compare_model: ref('dim_breed')
-      
+
       # Table-level expectations
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 50
           max_value: 500
-  
+
   - name: dim_temperaments
     description: |
       Dimension table containing individual temperament traits for each breed.
@@ -223,7 +250,7 @@ models:
               field: breed_id
           - dbt_expectations.expect_column_values_to_be_of_type:
               column_type: int64
-      
+
       - name: temperament
         description: "Single temperament trait (title case)"
         tests:
@@ -232,20 +259,20 @@ models:
           - dbt_expectations.expect_column_value_lengths_to_be_between:
               min_value: 2
               max_value: 50
-    
+
     tests:
       # Each breed should have at least 1 temperament
       - dbt_utils.expression_is_true:
           expression: "(SELECT COUNT(DISTINCT breed_id) FROM {{ ref('dim_temperaments') }}) >= (SELECT COUNT(*) * 0.8 FROM {{ ref('dim_breed') }})"
           config:
             severity: warn
-      
+
       # Unique combination of breed + temperament
       - dbt_utils.unique_combination_of_columns:
           combination_of_columns:
             - breed_id
             - temperament
-      
+
       # Row count should be significantly higher than dim_breed (many temperaments per breed)
       - dbt_expectations.expect_table_row_count_to_be_between:
           min_value: 100

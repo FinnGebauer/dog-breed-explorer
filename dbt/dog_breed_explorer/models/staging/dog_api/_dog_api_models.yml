@@ -9,15 +9,89 @@ models:
         tests:
           - unique
           - not_null
+        data_type: int64
       - name: breed_name
         description: Name of the dog breed
         tests:
           - not_null
+        data_type: string
       - name: breed_group
         description: Classification group (e.g., Sporting, Hound, Working)
+        data_type: string
       - name: weight_kg_min
         description: Minimum weight in kilograms
+        data_type: int64
       - name: weight_kg_max
         description: Maximum weight in kilograms
+        data_type: int64
       - name: _dlt_load_id
         description: DLT pipeline load identifier for lineage tracking
+        data_type: string
+      - name: bred_for
+        description: Purpose or role the breed was originally bred for
+        data_type: string
+        quote: true
+      - name: origin
+        description: Geographic origin or place where the breed originated
+        data_type: string
+        quote: true
+      - name: country_code
+        description: ISO country code of the breed's origin
+        data_type: string
+        quote: true
+      - name: temperament
+        description: Typical personality traits and behavioral characteristics
+        data_type: string
+        quote: true
+      - name: description
+        description: General description of the breed
+        data_type: string
+        quote: true
+      - name: history
+        description: Historical background and development of the breed
+        data_type: string
+        quote: true
+      - name: weight_metric_raw
+        description: Raw weight data in metric units as a string
+        data_type: string
+        quote: true
+      - name: weight_imperial_raw
+        description: Raw weight data in imperial units as a string
+        data_type: string
+        quote: true
+      - name: height_metric_raw
+        description: Raw height data in metric units as a string
+        data_type: string
+        quote: true
+      - name: height_imperial_raw
+        description: Raw height data in imperial units as a string
+        data_type: string
+        quote: true
+      - name: height_cm_min
+        description: Minimum height in centimeters
+        data_type: int64
+        quote: true
+      - name: height_cm_max
+        description: Maximum height in centimeters
+        data_type: int64
+        quote: true
+      - name: life_span_raw
+        description: Raw life span data as a string
+        data_type: string
+        quote: true
+      - name: life_span_years_min
+        description: Minimum life span in years
+        data_type: int64
+        quote: true
+      - name: life_span_years_max
+        description: Maximum life span in years
+        data_type: int64
+        quote: true
+      - name: reference_image_id
+        description: Identifier for the breed's reference image
+        data_type: string
+        quote: true
+      - name: _dlt_id
+        description: DLT internal unique identifier for the record
+        data_type: string
+        quote: true
